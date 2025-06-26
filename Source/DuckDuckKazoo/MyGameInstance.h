@@ -3,9 +3,9 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Blueprint/UserWidget.h"
-#include "GameFramework/PlayerController.h"
+#include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "MyGameInstance.generated.h"
-
 
 UCLASS()
 class DUCKDUCKKAZOO_API UMyGameInstance : public UGameInstance
@@ -23,14 +23,32 @@ public:
 
 	virtual void Init() override;
 
-	
 	UFUNCTION(BlueprintCallable)
 	void ShowMainMenu();
 
+	// Searching Sessions
+	void SearchAvailableSessions();
+	const TArray<FOnlineSessionSearchResult>& GetSearchResults() const;
+
 private:
-	
+
 	TSubclassOf<UUserWidget> MainMenuClass;
 
 	UPROPERTY()
 	UUserWidget* MainMenu;
+
+	// Session System
+	static const FName SESSION_NAME;
+	IOnlineSessionPtr SessionInterface;
+	TSharedPtr<FOnlineSessionSettings> SessionSettings;
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+	// Session Control
+	void CreateGameSession();
+	void DestroyExistingSession();
+
+	// Callbacks
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnFindSessionsComplete(bool bWasSuccessful);
 };
