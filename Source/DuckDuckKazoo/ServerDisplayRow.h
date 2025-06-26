@@ -4,26 +4,29 @@
 #include "Blueprint/UserWidget.h"
 #include "ServerDisplayRow.generated.h"
 
+class UTextBlock;
+class UButton;
+class UMainMenu;
+
 UCLASS()
 class DUCKDUCKKAZOO_API UServerDisplayRow : public UUserWidget
 {
 	GENERATED_BODY()
 
+public:
+	void Setup(UMainMenu* InParent, int32 InIndex, const FString& InServerName, const FString& InHostName, const FString& InPlayerCount);
+
 protected:
 	virtual bool Initialize() override;
 
-public:
-	UPROPERTY(meta = (BindWidget)) class UTextBlock* ServerNameText;
-	UPROPERTY(meta = (BindWidget)) class UTextBlock* HostName;
-	UPROPERTY(meta = (BindWidget)) class UTextBlock* ServerSize;
-	UPROPERTY(meta = (BindWidget)) class UButton* SelectServerButton;
-
-	UPROPERTY() class UMainMenu* Parent;
-	UPROPERTY() int32 Index;
-
-	void SetServerDetails(const FString& ServerName, const FString& Host, const FString& Size);
-	void SetParentAndIndex(class UMainMenu* InParent, int32 InIndex);
-
 private:
+	UPROPERTY(meta = (BindWidget)) UTextBlock* ServerNameText;
+	UPROPERTY(meta = (BindWidget)) UTextBlock* HostNameText;
+	UPROPERTY(meta = (BindWidget)) UTextBlock* PlayerCountText;
+	UPROPERTY(meta = (BindWidget)) UButton* SelectServerButton;
+
+	UPROPERTY() UMainMenu* Parent;
+	int32 Index;
+
 	UFUNCTION() void OnClicked();
 };

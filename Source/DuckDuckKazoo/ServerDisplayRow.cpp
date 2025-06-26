@@ -16,22 +16,14 @@ bool UServerDisplayRow::Initialize()
 	return true;
 }
 
-void UServerDisplayRow::SetServerDetails(const FString& ServerName, const FString& Host, const FString& Size)
-{
-	if (ServerNameText)
-		ServerNameText->SetText(FText::FromString(ServerName));
-
-	if (HostName)
-		HostName->SetText(FText::FromString(Host));
-
-	if (ServerSize)
-		ServerSize->SetText(FText::FromString(Size));
-}
-
-void UServerDisplayRow::SetParentAndIndex(UMainMenu* InParent, int32 InIndex)
+void UServerDisplayRow::Setup(UMainMenu* InParent, int32 InIndex, const FString& InServerName, const FString& InHostName, const FString& InPlayerCount)
 {
 	Parent = InParent;
 	Index = InIndex;
+
+	if (ServerNameText) ServerNameText->SetText(FText::FromString(InServerName));
+	if (HostNameText) HostNameText->SetText(FText::FromString(InHostName));
+	if (PlayerCountText) PlayerCountText->SetText(FText::FromString(InPlayerCount));
 }
 
 void UServerDisplayRow::OnClicked()
