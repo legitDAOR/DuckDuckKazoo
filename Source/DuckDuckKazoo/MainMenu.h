@@ -21,7 +21,6 @@ public:
     virtual void NativeDestruct() override;
 
     void SetGameInstanceReference(UMyGameInstance* Instance);
-
     void RefreshServerList();
     void SelectServer(int32 Index);
 
@@ -48,10 +47,10 @@ private:
     // UI Elements
     UPROPERTY(meta = (BindWidget)) UWidgetSwitcher* Switch;
     UPROPERTY(meta = (BindWidget)) UEditableText* IPAddress;
+    UPROPERTY(meta = (BindWidget)) UEditableText* ServerNameInput;
     UPROPERTY(meta = (BindWidget)) UScrollBox* ServerScrollBox;
 
     UPROPERTY(EditAnywhere) TSubclassOf<UServerDisplayRow> ServerRowClass;
-
     UPROPERTY() UMyGameInstance* GameInstanceRef;
 
     TOptional<int32> SelectedIndex;

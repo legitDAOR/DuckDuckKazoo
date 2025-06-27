@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "MyGameInstance.h"
 #include "ServerDisplayRow.generated.h"
 
 class UTextBlock;
@@ -14,7 +15,7 @@ class DUCKDUCKKAZOO_API UServerDisplayRow : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void Setup(UMainMenu* InParent, int32 InIndex, const FString& InServerName, const FString& InHostName, const FString& InPlayerCount);
+	void Setup(UMainMenu* InParent, int32 InIndex, const FServerData& ServerData);
 
 protected:
 	virtual bool Initialize() override;

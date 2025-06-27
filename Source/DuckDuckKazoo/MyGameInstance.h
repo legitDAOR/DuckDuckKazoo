@@ -8,6 +8,21 @@
 
 class UMainMenu;
 
+USTRUCT(BlueprintType)
+struct FServerData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FString ServerName;
+
+	UPROPERTY(BlueprintReadOnly)
+	FString HostUsername;
+
+	UPROPERTY(BlueprintReadOnly)
+	FString PlayerCount;
+};
+
 UCLASS()
 class DUCKDUCKKAZOO_API UMyGameInstance : public UGameInstance
 {
@@ -20,7 +35,7 @@ public:
 	UFUNCTION(BlueprintCallable) void ShowMainMenu();
 
 	// Multiplayer options
-	UFUNCTION(BlueprintCallable) void HostOnline();
+	UFUNCTION(BlueprintCallable) void HostOnline(const FString& CustomName = "Online Game");
 	UFUNCTION(BlueprintCallable) void HostLocal();
 	UFUNCTION(BlueprintCallable) void StartSinglePlayer();
 	UFUNCTION(BlueprintCallable) void JoinByIndex(int32 Index);
@@ -41,10 +56,8 @@ private:
 	const FString LOBBY_MAP = TEXT("/Game/DuckDuckKazoo/Levels/Lobby");
 	const FString SINGLEPLAYER_MAP = TEXT("/Game/DuckDuckKazoo/Levels/SinglePlayerMap");
 
-	void CreateOnlineSession();
 	void DestroyExistingSession();
 
-	// Callbacks
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnFindSessionsComplete(bool bWasSuccessful);

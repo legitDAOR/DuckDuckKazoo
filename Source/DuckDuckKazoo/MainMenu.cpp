@@ -53,27 +53,36 @@ void UMainMenu::SetGameInstanceReference(UMyGameInstance* Instance)
 
 void UMainMenu::RefreshServerList()
 {
-    if (!GameInstanceRef || !ServerScrollBox || !ServerRowClass) return;
+    if (!ServerScrollBox || !ServerRowClass) return;
 
     ServerScrollBox->ClearChildren();
     SelectedIndex.Reset();
 
-    const TArray<FOnlineSessionSearchResult>& Results = GameInstanceRef->GetSearchResults();
-
-    for (int32 i = 0; i < Results.Num(); ++i)
+    if (GameInstanceRef)
     {
-        UServerDisplayRow* Row = CreateWidget<UServerDisplayRow>(this, ServerRowClass);
-        if (Row)
-        {
-            FString ServerName, HostName, PlayerCount;
-            Results[i].Session.SessionSettings.Get(FName("ServerName"), ServerName);
-            HostName = Results[i].Session.OwningUserName;
-            int32 MaxPlayers = Results[i].Session.SessionSettings.NumPublicConnections;
-            int32 OpenSlots = Results[i].Session.NumOpenPublicConnections;
-            PlayerCount = FString::Printf(TEXT("%d/%d"), MaxPlayers - OpenSlots, MaxPlayers);
+        const TArray<FOnlineSessionSearchResult>& Results = GameInstanceRef->GetSearchResults();
+        UE_LOG(LogTemp, Log, TEXT("Found %d session(s)"), Results.Num());
 
-            Row->Setup(this, i, ServerName, HostName, PlayerCount);
-            ServerScrollBox->AddChild(Row);
+        for (int32 i = 0; i < Results.Num(); ++i)
+        {
+            UServerDisplayRow* Row = CreateWidget<UServerDisplayRow>(this, ServerRowClass);
+            if (Row)
+            {
+                FString ServerName, HostName, PlayerCount;
+                Results[i].Session.SessionSettings.Get(FName("ServerName"), ServerName);
+                HostName = Results[i].Session.OwningUserName;
+                int32 MaxPlayers = Results[i].Session.SessionSettings.NumPublicConnections;
+                int32 OpenSlots = Results[i].Session.NumOpenPublicConnections;
+                PlayerCount = FString::Printf(TEXT("%d/%d"), MaxPlayers - OpenSlots, MaxPlayers);
+
+                FServerData Data;
+                Data.ServerName = ServerName;
+                Data.HostUsername = HostName;
+                Data.PlayerCount = PlayerCount;
+
+                Row->Setup(this, i, Data);
+                ServerScrollBox->AddChild(Row);
+            }
         }
     }
 }
@@ -81,7 +90,10 @@ void UMainMenu::RefreshServerList()
 void UMainMenu::SelectServer(int32 Index)
 {
     SelectedIndex = Index;
-    UE_LOG(LogTemp, Log, TEXT("Selected Server Index: %d"), Index);
+    if (GameInstanceRef && SelectedIndex.IsSet())
+    {
+        GameInstanceRef->JoinByIndex(SelectedIndex.GetValue());
+    }
 }
 
 FReply UMainMenu::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -106,11 +118,14 @@ FReply UMainMenu::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& 
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
-// Hosting Logic
-
 void UMainMenu::OnHostOnlineClicked()
 {
-    if (GameInstanceRef) GameInstanceRef->HostOnline();
+    if (GameInstanceRef)
+    {
+        FString CustomName = ServerNameInput ? ServerNameInput->GetText().ToString() : "Online Game";
+        if (CustomName.IsEmpty()) CustomName = "Online Game";
+        GameInstanceRef->HostOnline(CustomName);
+    }
 }
 
 void UMainMenu::OnHostLocalClicked()
@@ -123,17 +138,15 @@ void UMainMenu::OnSinglePlayerClicked()
     if (GameInstanceRef) GameInstanceRef->StartSinglePlayer();
 }
 
-// Join Buttons
-
 void UMainMenu::OnJoinMultiClicked()
 {
-    if (Switch) Switch->SetActiveWidgetIndex(6); // Show Server List
+    if (Switch) Switch->SetActiveWidgetIndex(6);
     if (GameInstanceRef) GameInstanceRef->SearchAvailableSessions();
 }
 
 void UMainMenu::OnJoinLocalClicked()
 {
-    if (Switch) Switch->SetActiveWidgetIndex(5); // Show IP Entry
+    if (Switch) Switch->SetActiveWidgetIndex(5);
 }
 
 void UMainMenu::OnConfirmLocalClicked()
@@ -142,16 +155,13 @@ void UMainMenu::OnConfirmLocalClicked()
 
     FString EnteredIP = IPAddress->GetText().ToString();
 
-    // Ensure proper format, optional
-    if (!EnteredIP.StartsWith(TEXT("127.")) && !EnteredIP.StartsWith(TEXT("192.")) && !EnteredIP.StartsWith(TEXT("localhost")))
+    if (EnteredIP.Equals("localhost", ESearchCase::IgnoreCase))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Entered IP seems invalid: %s"), *EnteredIP);
+        EnteredIP = "127.0.0.1";
     }
 
     GameInstanceRef->JoinLocal(EnteredIP);
 }
-
-// Menu Navigation
 
 void UMainMenu::OnCancelLocalClicked()
 {
@@ -162,7 +172,6 @@ void UMainMenu::OnPlayButtonClicked()
 {
     if (Switch) Switch->SetActiveWidgetIndex(2);
 }
-
 
 void UMainMenu::OnQuitClicked()
 {
