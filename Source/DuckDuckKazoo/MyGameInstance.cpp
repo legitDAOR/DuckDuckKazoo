@@ -1,4 +1,5 @@
 #include "MyGameInstance.h"
+#include "MyGameInstance.h"
 #include "Engine/Engine.h"
 #include "Blueprint/UserWidget.h"
 #include "OnlineSubsystem.h"
@@ -21,14 +22,24 @@ void UMyGameInstance::Init()
     IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
     if (Subsystem)
     {
+        UE_LOG(LogTemp, Log, TEXT("Found subsystem: %s"), *Subsystem->GetSubsystemName().ToString());
         SessionInterface = Subsystem->GetSessionInterface();
         if (SessionInterface.IsValid())
         {
+            UE_LOG(LogTemp, Log, TEXT("Session Interface is valid"));
             SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnCreateSessionComplete);
             SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionComplete);
             SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMyGameInstance::OnFindSessionsComplete);
             SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnJoinSessionComplete);
         }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Session Interface is NOT valid"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("No subsystem found"));
     }
 }
 
@@ -108,21 +119,44 @@ void UMyGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSucce
 
 void UMyGameInstance::SearchAvailableSessions()
 {
-    if (!SessionInterface.IsValid()) return;
+    if (!SessionInterface.IsValid())
+    {
+        UE_LOG(LogTemp, Error, TEXT("SearchAvailableSessions: SessionInterface is invalid"));
+        return;
+    }
 
+    UE_LOG(LogTemp, Log, TEXT("Starting session search..."));
+    
     SessionSearch = MakeShareable(new FOnlineSessionSearch());
     SessionSearch->bIsLanQuery = false;
     SessionSearch->MaxSearchResults = 50;
     SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-
-    SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+  
+    bool bStartedSearch = SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+    UE_LOG(LogTemp, Log, TEXT("Search started: %s"), bStartedSearch ? TEXT("true") : TEXT("false"));
 }
 
 void UMyGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 {
-    if (SessionSearch.IsValid())
+    if (!bWasSuccessful)
     {
-        UE_LOG(LogTemp, Log, TEXT("FindSessionsComplete: %d sessions found"), SessionSearch->SearchResults.Num());
+        UE_LOG(LogTemp, Error, TEXT("Find Sessions Failed"));
+        return;
+    }
+
+    if (!SessionSearch.IsValid())
+    {
+        UE_LOG(LogTemp, Error, TEXT("SessionSearch invalid"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("Found %d sessions"), SessionSearch->SearchResults.Num());
+    
+    for (const FOnlineSessionSearchResult& Result : SessionSearch->SearchResults)
+    {
+        FString ServerName;
+        Result.Session.SessionSettings.Get(FName("ServerName"), ServerName);
+        UE_LOG(LogTemp, Log, TEXT("Found session: %s"), *ServerName);
     }
 
     if (bWasSuccessful && MainMenu)
